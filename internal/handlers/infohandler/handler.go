@@ -11,6 +11,9 @@ import (
 	"github.com/lrstanley/chix"
 )
 
+// runCoreConsole is the seam used to invoke coreconsole. Tests replace it.
+var runCoreConsole = utils.RunCoreConsole
+
 type Handler struct {
 }
 
@@ -23,26 +26,22 @@ func (h *Handler) Route(r chi.Router) {
 }
 
 func (h *Handler) getInfo(w http.ResponseWriter, r *http.Request) {
-	infoRequest := &models.GetInfoRequest{}
-
-	if chix.Error(w, r, chix.Bind(r, infoRequest)) {
-		return
-	}
-
-	// Get the pkmn in base64
+	// Get the pkmn in base64. This happens before the request is bound so that
+	// malformed uploads are reported with a clean error instead of a 500.
 	pkmn, err := utils.GetPkmnFromRequest(w, r)
 	if err != nil {
-		if err.Error() == "file too large" {
-			w.Header().Set("Content-Type", "application/json")
-
-			chix.JSON(w, r, http.StatusRequestEntityTooLarge, chix.M{
-				"error": "file too large",
-			})
+		if utils.RespondPkmnError(w, r, err) {
 			return
 		}
 
 		chix.Error(w, r, err)
 		sentry.CaptureException(err)
+		return
+	}
+
+	infoRequest := &models.GetInfoRequest{}
+
+	if chix.Error(w, r, chix.Bind(r, infoRequest)) {
 		return
 	}
 
@@ -52,38 +51,12 @@ func (h *Handler) getInfo(w http.ResponseWriter, r *http.Request) {
 		extraArgs = append(extraArgs, fmt.Sprintf("--generation=%s", infoRequest.Generation))
 	}
 
-	output, err := utils.RunCoreConsole(r.Context(), "summary", pkmn, extraArgs...)
+	output, err := runCoreConsole(r.Context(), "summary", pkmn, extraArgs...)
 	if err != nil {
-		// if error code 1 or 2, the pkmn provided is invalid.
-		if err.Error() == "CoreConsole exited with code 1" || err.Error() == "CoreConsole exited with code 2" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-
-			w.Write([]byte(output))
-			return
-		}
-
-		// if error code 3, something unknown happened, but should've been captured by sentry inside coreconsole itself.
-		if err.Error() == "CoreConsole exited with code 3" {
-			chix.Error(w, r, fmt.Errorf("something went wrong, please try again later"))
-			return
-		}
-
-		// if error code 4, the .env is missing for coreconsole, which should only happen if I forget to set it up, meaning we can tell the user that coreconsole is currently being set-up and to try again later
-		if err.Error() == "CoreConsole exited with code 4" {
-			w.Header().Set("Content-Type", "application/json")
-
-			chix.JSON(w, r, http.StatusServiceUnavailable, chix.M{
-				"error": "CoreConsole is currently being set-up, please try again later",
-			})
-			return
-		}
-
-		// If we got here, then something went wrong but likely wasn't caught by coreconsole inside sentry so we'll deal with it here.
-		sentry.CaptureException(err)
-		chix.Error(w, r, fmt.Errorf("something went wrong, please try again later"))
+		utils.RespondCoreConsoleError(w, r, output, err)
 		return
 	}
+
 	// we got JSON back, so we can just write it to the response
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(output))

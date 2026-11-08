@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/FlagBrew/CoreAPI/internal/handlers/generalhandler"
 	"github.com/FlagBrew/CoreAPI/internal/handlers/infohandler"
 	"github.com/FlagBrew/CoreAPI/internal/handlers/legalityhandler"
+	"github.com/FlagBrew/CoreAPI/internal/handlers/pksmhandler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
@@ -20,8 +22,26 @@ func httpServer(ctx context.Context) *http.Server {
 
 	r := chi.NewRouter()
 
-	if len(cli.Flags.HTTP.TrustedProxies) > 0 {
-		r.Use(chix.UseRealIP(cli.Flags.HTTP.TrustedProxies, chix.OptUseXForwardedFor))
+	// An empty or malformed entry in the trusted proxies list makes the real IP
+	// middleware panic while the server is being built, which takes the whole
+	// API down, so those entries are dropped here.
+	trustedProxies := make([]string, 0, len(cli.Flags.HTTP.TrustedProxies))
+	for _, proxy := range cli.Flags.HTTP.TrustedProxies {
+		proxy = strings.TrimSpace(proxy)
+		if proxy == "" {
+			continue
+		}
+
+		if _, _, err := net.ParseCIDR(proxy); err != nil && net.ParseIP(proxy) == nil {
+			logger.WithField("proxy", proxy).Warn("ignoring malformed trusted proxy")
+			continue
+		}
+
+		trustedProxies = append(trustedProxies, proxy)
+	}
+
+	if len(trustedProxies) > 0 {
+		r.Use(chix.UseRealIP(trustedProxies, chix.OptUseXForwardedFor))
 	}
 
 	r.Use(
@@ -75,6 +95,7 @@ func httpServer(ctx context.Context) *http.Server {
 	r.Route("/api/info", infohandler.NewHandler().Route)
 	r.Route("/api/legality", legalityhandler.NewHandler().Route)
 	r.Route("/api/general", generalhandler.NewHandler().Route)
+	r.Route("/api/v2/pksm", pksmhandler.NewHandler().Route)
 
 	return &http.Server{
 		Addr:    cli.Flags.HTTP.Addr,
