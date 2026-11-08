@@ -1,0 +1,57 @@
+# Linea base de los Pokemon de pokemons/ frente al motor ALM 26.10.18.
+# Formato: nombre|legal|numero de razones|legalize
+#   legal    -> true | false
+#   razones  -> numero de motivos del reporte de legalidad
+#   legalize -> yes  (ALM devuelve un Pokemon legal)
+#             no   (ALM no puede y el reporte lo explica)
+#             already (el Pokemon ya es legal; la API responde 400)
+# Anadir un Pokemon nuevo obliga a decidir su linea base aqui: el arnes falla
+# mientras no exista una entrada para el.
+0001 - Bulbasaur - 96132FF56EFC.pk7|false|3|yes
+0002 ★ - Ivysaur - 38262FF56EFC.pk7|false|7|yes
+0011 - Metapod - D2232FF56EFC.pk7|false|1|yes
+0012 - Butterfree - 926E2FF56EFC.pk7|false|3|yes
+0014 - Kakuna - FCE92FF56EFC.pk7|false|3|yes
+0015 - Beedrill - EC622FF56EFC.pk7|false|3|yes
+0025 - Pikachu - B17F2FF56EFC.pk7|false|3|yes
+0026 - Raichu - BC0F2FF56EFC.pk7|false|3|yes
+0031 - Nidoqueen - 92002FF56EFC.pk7|false|4|yes
+0034 - Nidoking - F7832FF56EFC.pk7|false|3|yes
+0035 - Clefairy - B7932FF56EFC.pk7|false|2|yes
+0036 - Clefable - 80902FF56EFC.pk7|false|3|yes
+0039 - Jigglypuff - CEE52FF56EFC.pk7|false|2|yes
+0040 - Wigglytuff - 67E12FF56EFC.pk7|false|3|yes
+0044 - Gloom - 93A72FF56EFC.pk7|false|3|yes
+0045 - Vileplume - 98B22FF56EFC.pk7|false|3|yes
+0049 - Venomoth - 80E02FF56EFC.pk7|false|3|yes
+0094 - Gengar - A1892FF56EFC.pk7|false|4|yes
+0106 - Hitmonlee - A59C2FF56EFC.pk7|false|3|yes
+0107 - Hitmonchan - 03122FF56EFC.pk7|false|3|yes
+0124 - Jynx - EC802FF56EFC.pk7|false|3|yes
+0125 - Electabuzz - 73C62FF56EFC.pk7|false|3|yes
+0126 - Magmar - 9E332FF56EFC.pk7|false|3|yes
+0130 - Gyarados - 343D2FF56EFC.pk7|false|3|yes
+0132 - Ditto - 251E015BA701.pk7|false|3|yes
+0132 - Ditto - 404F2FF56EFC.pk7|false|4|yes
+0144 - Articuno - FED92FF56EFC.pk7|false|4|yes
+0145 - Zapdos - 6B552FF56EFC.pk7|false|4|yes
+0146 - Moltres - E4A32FF56EFC.pk7|false|4|yes
+0149 - Dragonite - 1B582FF56EFC.pk7|false|3|yes
+0150 - Mewtwo - 882B2FF56EFC.pk7|false|4|yes
+0151 - Mew - A7EE10411008.pk7|false|2|yes
+0151 - Mew - DB702FF56EFC.pk7|false|3|yes
+0168 - Ariados - 33F92FF56EFC.pk7|false|3|yes
+0182 - Bellossom - 7F2F2FF56EFC.pk7|false|3|yes
+0186 - Politoed - E2952FF56EFC.pk7|false|4|yes
+0190 - Aipom - 8A9BAC15DED3.pk9|false|1|yes
+0190 ★ - Aipom - 8C452C96DFD3.pk9|false|3|yes
+0196 - Espeon - ADAA2FF56EFC.pk7|false|3|yes
+0197 - Umbreon - 5FFA2FF56EFC.pk7|false|3|yes
+0201 - Unown - 917C2FF56EFC.pk7|false|4|yes
+0217 - Ursaring - 1D262FF56EFC.pk7|false|3|yes
+0221 - Piloswine - 9F362FF56EFC.pk7|false|3|yes
+0483 - Dialga - 8FBE511B89E1.pk9|true|1|already
+0484 - Palkia - 854B930C4A06.pk9|true|1|already
+0487 - Giratina - CC09EC92E4E0.pk9|true|1|already
+0704 - Goomy - 89956D135EB8.pk7|false|2|yes
+0726 ★ - Torracat - FC2FD3A74BA9.pk7|false|1|yes

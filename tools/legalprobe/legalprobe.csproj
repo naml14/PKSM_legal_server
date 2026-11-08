@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>legalprobe</AssemblyName>
+    <RootNamespace>legalprobe</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Las referencias van por ruta completa: con el nombre simple, MSBuild
+       resuelve el ensamblado desde el directorio de salida de una build
+       anterior en lugar de usar el HintPath. -->
+  <ItemGroup>
+    <Reference Include="..\..\.dl\newdeps\PKHeX.Core.dll">
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="..\..\.dl\newdeps\PKHeX.Core.AutoMod.dll">
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

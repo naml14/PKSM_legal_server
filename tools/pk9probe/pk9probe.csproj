@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>pk9probe</AssemblyName>
+    <RootNamespace>pk9probe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="PKHeX.Core">
+      <HintPath>..\..\output\app\cc\PKHeX.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
