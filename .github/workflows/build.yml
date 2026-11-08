@@ -13,6 +13,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # The version declared in go.mod.
+          go-version: '1.20.x'
+
+      - name: Run Go tests
+        run: go test ./...
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # The engine targets net10.0.
+          dotnet-version: 10.0.x
+
+      - name: Run engine tests
+        run: |
+          dotnet test coreconsole/Tests/Tests.csproj -p:RestoreSources=https://api.nuget.org/v3/index.json
+
       - name: Build Docker image
         run: |
           docker build -t myapp .

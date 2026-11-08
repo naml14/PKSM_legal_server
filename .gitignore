@@ -4,6 +4,8 @@ tmp/
 **/*.tmp
 **/tmp
 **/*.txt
+# ...pero la linea base de los fixtures de prueba tiene que versionarse.
+!tools/verify-baseline.txt
 **/*.test
 **/*.prof
 **/*.conf
@@ -13,5 +15,15 @@ tmp/
 **/dist
 **/.env
 bin
+obj
+out
 coreapi
+coreapi.exe
 cc/
+output/
+output.tar
+.dotnet/
+.dotnet10/
+.dl/
+.ccbuild*/
+.verify-tmp/

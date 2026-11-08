@@ -1,0 +1,17 @@
+# Politica de finales de linea: el repositorio guarda LF en el indice y el
+# arbol de trabajo tambien, para que los scripts de shell y los diffs no
+# cambien entre maquinas.
+* text=auto eol=lf
+
+# Binarios: no se tocan.
+*.dll binary
+*.exe binary
+*.pdb binary
+*.png binary
+*.jpg binary
+*.tar binary
+*.gz binary
+
+# Fixtures de Pokemon (contenido binario).
+*.pk7 binary
+*.pk9 binary

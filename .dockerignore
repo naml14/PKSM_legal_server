@@ -1,0 +1,33 @@
+# Contexto de build de la imagen: solo hace falta el codigo fuente y los
+# ficheros de build. Fuera los SDK locales (.dotnet/.dotnet10, ~1.5 GB), los
+# artefactos de compilacion y los fixtures de prueba.
+.git
+.github
+.idea
+.atl
+odd
+tools
+pokemons
+output
+cc
+.bin
+.pdb
+
+# SDKs locales y artefactos de compilacion
+.dotnet
+.dotnet10
+.dl
+.ccbuild*
+.ccbuild10
+.verify-tmp
+obj
+bin
+
+# Binarios y ficheros generados (ojo: NO excluir *.dll, el motor necesita
+# coreconsole/deps/PKHeX.Core.AutoMod.dll)
+coreapi
+coreapi.exe
+output.tar
+*.pk9
+*.pk7
+*.user
