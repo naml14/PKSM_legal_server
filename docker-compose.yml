@@ -53,12 +53,23 @@ services:
     # variables inside the labels: leaving ${DOMAIN} makes Traefik reject the
     # rule ("invalid value for HostSNI matcher") and it does not ask for a
     # certificate. To change the domain, edit this line (and the DNS record).
+    #
+    # There are two routers on purpose, each with its own certificate:
+    #   - pksmlegalserver: the long hostname, for browsers and any client
+    #     that has room for it.
+    #   - pksmlegalp: the short hostname (https://p.electrondevnaml.dev is 29
+    #     characters, the most the address field of the PKSM app takes).
+    # They share the same service.
     labels:
       - traefik.enable=true
       - traefik.http.routers.pksmlegalserver.rule=Host(`legal.electrondevnaml.dev`)
       - traefik.http.routers.pksmlegalserver.tls=true
       - traefik.http.routers.pksmlegalserver.tls.certresolver=letsencrypt
       - traefik.http.services.pksmlegalserver.loadbalancer.server.port=8080
+      - traefik.http.routers.pksmlegalp.rule=Host(`p.electrondevnaml.dev`)
+      - traefik.http.routers.pksmlegalp.tls=true
+      - traefik.http.routers.pksmlegalp.tls.certresolver=letsencrypt
+      - traefik.http.routers.pksmlegalp.service=pksmlegalserver
       - coolify.managed=true
 
     # The port is NOT published on the host: Traefik reaches the container
