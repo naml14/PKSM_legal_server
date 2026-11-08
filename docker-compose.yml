@@ -61,10 +61,16 @@ services:
       - traefik.http.services.pksmlegalserver.loadbalancer.server.port=8080
       - coolify.managed=true
 
-    # Published port: a direct way to debug (http://<IP>:8080). To expose it
-    # outside, the firewall has to be opened: `ufw allow 8080/tcp`.
-    ports:
-      - "8080:8080"
+    # The port is NOT published on the host: Traefik reaches the container
+    # through the `coolify` network, and the label above carries the target
+    # port. Publishing it here would collide with whatever else already uses
+    # 8080 on the VPS, and it would let anyone that reaches the app directly
+    # spoof the X-Forwarded-For header.
+    #
+    # To debug it:
+    #   docker compose exec pksm-legal-server curl -fsS http://127.0.0.1:8080/api/general/kuma-ping
+    expose:
+      - "8080"
 
     networks:
       - coolify
