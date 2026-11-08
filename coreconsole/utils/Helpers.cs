@@ -1,6 +1,7 @@
 using System.Text.Json;
 using coreconsole.Models;
 using PKHeX.Core;
+using PKHeX.Core.AutoMod;
 using Sentry;
 
 namespace coreconsole.utils;
@@ -21,7 +22,8 @@ public static class Helpers
     public static void Init()
     {
         EncounterEvent.RefreshMGDB(string.Empty);
-        RibbonStrings.ResetDictionary(GameInfo.Strings.ribbons);
+        // ALM 26.10.18 hides the easter eggs behind a switch; the console does not want them.
+        Legalizer.EnableEasterEggs = false;
         Sprites.Init();
 
         SerializerOptions = new JsonSerializerOptions

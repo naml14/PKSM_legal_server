@@ -2,13 +2,16 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <!-- PKHeX.Core 26.10.18 (and the matching AutoMod build) target .NET 10:
+             they reference System.Runtime 10.0.0.0, so the older net7.0 target cannot load them. -->
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <NoWarn>$(NoWarn);CS0618</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="PKHeX.Core" Version="23.6.3" />
+        <PackageReference Include="PKHeX.Core" Version="26.10.18" />
         <PackageReference Include="Sentry" Version="3.33.0" />
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     </ItemGroup>

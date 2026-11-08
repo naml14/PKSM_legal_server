@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using coreconsole.handlers;
 using PKHeX.Core;
 using Sentry;
@@ -32,13 +32,13 @@ public struct Pokemon
         Pid = summary.PID;
         Exp = summary.EXP;
         Level = summary.Level;
-        Markings = summary.Markings;
+        Markings = GetMarkings(pkmn);
         Ht = summary.NotOT;
         AbilityNum = summary.AbilityNum;
         GenderFlag = summary.GenderFlag;
         FormNum = summary.Form;
-        PkrsStrain = summary.PKRS_Strain;
-        PkrsDays = summary.PKRS_Days;
+        PkrsStrain = summary.PokerusStrain;
+        PkrsDays = summary.PokerusDays;
         FatefulEncounter = summary.FatefulEncounter;
         IsEgg = summary.IsEgg;
         IsNicknamed = summary.IsNicknamed;
@@ -51,12 +51,12 @@ public struct Pokemon
 
         Stats = new List<Stat>
         {
-            new("HP", summary.HP_IV, summary.HP_EV, summary.HP),
-            new("Attack", summary.ATK_IV, summary.ATK_EV, summary.ATK),
-            new("Defense", summary.DEF_IV, summary.DEF_EV, summary.DEF),
-            new("Special Attack", summary.SPA_IV, summary.SPA_EV, summary.SPA),
-            new("Special Defense", summary.SPD_IV, summary.SPD_EV, summary.SPD),
-            new("Speed", summary.SPE_IV, summary.SPE_EV, summary.SPE)
+            new("HP", summary.IV_HP, summary.EV_HP, summary.HP),
+            new("Attack", summary.IV_ATK, summary.EV_ATK, summary.ATK),
+            new("Defense", summary.IV_DEF, summary.EV_DEF, summary.DEF),
+            new("Special Attack", summary.IV_SPA, summary.EV_SPA, summary.SPA),
+            new("Special Defense", summary.IV_SPD, summary.EV_SPD, summary.SPD),
+            new("Speed", summary.IV_SPE, summary.EV_SPE, summary.SPE)
         };
 
         Moves = new List<Move>
@@ -92,11 +92,11 @@ public struct Pokemon
         });
 
         Ribbons = tmpRibbons;
-        MetData = new MetData(summary.MetLoc, summary.MetLevel, summary.Met_Year, summary.Met_Month, summary.Met_Day);
-        EggData = new EggData(summary.EggLoc, summary.Egg_Year, summary.Egg_Month, summary.Egg_Day);
+        MetData = new MetData(summary.MetLoc, summary.MetLevel, summary.MetYear, summary.MetMonth, summary.MetDay);
+        EggData = new EggData(summary.EggLoc, summary.EggYear, summary.EggMonth, summary.EggDay);
         try
         {
-            OtGender = GameInfo.GenderSymbolASCII[pkmn.OT_Gender];
+            OtGender = GameInfo.GenderSymbolASCII[pkmn.OriginalTrainerGender];
         }
         catch (Exception e)
         {
@@ -108,10 +108,16 @@ public struct Pokemon
         PartySize = pkmn.SIZE_PARTY;
         ItemNum = pkmn.HeldItem;
         Generation = pkmn.Generation;
-        VersionNum = pkmn.Version;
+        VersionNum = (int)pkmn.Version;
         try
         {
-            Base64 = Convert.ToBase64String(PartySize > StoredSize ? pkmn.DecryptedPartyData : pkmn.DecryptedBoxData);
+            var data = new byte[PartySize > StoredSize ? PartySize : StoredSize];
+            if (PartySize > StoredSize)
+                pkmn.WriteDecryptedDataParty(data);
+            else
+                pkmn.WriteDecryptedDataStored(data);
+
+            Base64 = Convert.ToBase64String(data);
             if (Version == "") Version = Enum.GetName(typeof(GameVersion), VersionNum) ?? "???";
         }
         catch (Exception e)
@@ -135,6 +141,27 @@ public struct Pokemon
         IsLegal = legality.Valid;
         Report = legality.Report();
         SpriteSet = new Sprites(summary, pkmn);
+    }
+
+    /// <summary>
+    /// Builds the bitmask of the applied markings of a Pokemon.
+    /// </summary>
+    /// <remarks>
+    /// PKHeX.Core 26.10.18 dropped the Markings property of EntitySummary; the markings are read
+    /// from the Pokemon itself through the IAppliedMarkings interface instead.
+    /// </remarks>
+    private static int GetMarkings(PKM pkmn)
+    {
+        if (pkmn is not IAppliedMarkings applied) return 0;
+
+        var markings = 0;
+        for (var i = 0; i < applied.MarkingCount; i++)
+        {
+            if (pkmn is IAppliedMarkings<MarkingColor> colored && colored.GetMarking(i) != MarkingColor.None)
+                markings |= 1 << i;
+        }
+
+        return markings;
     }
 
     [JsonPropertyName("ot")] public string Ot { get; set; }
