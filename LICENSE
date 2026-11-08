@@ -1,0 +1,28 @@
+PKSM_legal_server is available under the MIT license OR the GNU General Public
+License v3.0, at your option.
+
+    SPDX-License-Identifier: MIT OR GPL-3.0-or-later
+
+You may choose either license. The full texts are in this repository:
+
+  * LICENSE-MIT      the MIT license
+  * LICENSE-GPL-3.0  the GNU General Public License v3.0
+
+Copyright (c) 2026 Andrés Mora
+
+This project continues the work of FlagBrew/CoreAPI
+(https://github.com/FlagBrew/CoreAPI), which was abandoned (its last commit is
+2023-10-11) and never published a license. No license is inherited from it.
+
+Attribution
+-----------
+
+Whichever license you choose, if you use this repository you have to name where
+you took it from:
+
+  * keep the NOTICE file with the copies you distribute, and
+  * mention both this project (PKSM_legal_server) and the upstream project it
+    continues (FlagBrew/CoreAPI) in your README, your release notes or your
+    documentation.
+
+The upstream authors are FM1337 and Allen; see NOTICE for the details.
