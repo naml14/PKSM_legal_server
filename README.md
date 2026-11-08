@@ -171,3 +171,14 @@ The image is built in three stages: the Go binary, the C# engine (with the
 .NET 10 SDK) and a runtime image with the .NET 10 runtime. `start.sh` copies
 `/data/.env` to `/app/.env` for the API and to `/app/cc/.env` for the engine,
 and then runs the API as the main process.
+
+## Origin and license
+
+This repository continues **FlagBrew/CoreAPI** (<https://github.com/FlagBrew/CoreAPI>),
+the API server that PKSM uses for auto legality and GPSS. The upstream history is
+kept intact, so `git log upstream/master` shows where every change comes from.
+
+The upstream repository does **not** publish a license file and GitHub reports no
+license for it, which means the rights stay with its authors. Keep this repository
+private unless you have their permission, and do not add a license of your own to
+code that is not yours.
