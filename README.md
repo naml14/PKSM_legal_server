@@ -157,20 +157,68 @@ The `tools/` folder has the scripts used to check a running API:
 The test fixtures (the real Pokemon files used by those scripts) are in
 `pokemons/`.
 
-## Docker
+## Deployment
+
+### Docker
 
 ```bash
 make docker-build
 
 # the configuration is read from /data/.env inside the container
 mkdir -p dockerdata && cp .env.example dockerdata/.env
-docker run --rm -p 8080:8080 -v "$(pwd)/dockerdata:/data" coreapi
+docker run --rm -p 8080:8080 -v "$(pwd)/dockerdata:/data" pksm-legal-server
 ```
 
 The image is built in three stages: the Go binary, the C# engine (with the
 .NET 10 SDK) and a runtime image with the .NET 10 runtime. `start.sh` copies
 `/data/.env` to `/app/.env` for the API and to `/app/cc/.env` for the engine,
 and then runs the API as the main process.
+
+### Coolify (VPS)
+
+`docker-compose.yml` is the deployment descriptor, with the same Traefik
+pattern as the mail server that is already running:
+
+- **Coolify** → Projects → New Resource → Docker Compose Empty → paste
+  `docker-compose.yml` → Environment Variables → the keys listed below.
+- The hostname in the Traefik label goes **literal**: Coolify does not
+  interpolate variables inside the labels, so `${DOMAIN}` there makes Traefik
+  reject the rule and it never asks for a certificate. Change the line in
+  `docker-compose.yml` (and the DNS record) to change the domain.
+- The service listens on **8080** and the health endpoint is
+  `/api/general/kuma-ping`; the compose file declares the healthcheck that
+  Coolify and the proxy use.
+- The keys are **never** written in the compose file, the Dockerfile or the
+  repository: they arrive as environment variables. A key written in the
+  Dockerfile stays in the image layers and can be read with `docker history`.
+
+#### The configuration
+
+The API reads its configuration from the environment, and the engine reads it
+from a `.env` file in its own working directory. `start.sh` covers both
+cases: a `.env` file mounted at `/data/.env` is copied to the two places
+that need it, and when there is no file (the usual Coolify case, where the
+values come as environment variables) the file the engine needs is written
+from the environment.
+
+Every one of these variables has to be **present**, an empty value is enough
+(the API refuses to start with "the required flag ... was not specified"):
+
+| Variable | Value |
+|---|---|
+| `CONFIGURED` | `true` |
+| `ENV` | `production` |
+| `HTTP_ADDR` | `:8080` |
+| `HTTP_BASE_URL` | the public URL of the service, `https://<domain>` |
+| `HTTP_VALIDATION_KEY` | 32 or 64 bytes |
+| `HTTP_ENCRYPTION_KEY` | 32 bytes |
+| `HTTP_SESSION_KEY` | any random string |
+| `HTTP_TRUSTED_PROXIES` | the CIDR of the reverse proxy (`172.16.0.0/12` for the default Docker network), so the client IP is read from `X-Forwarded-For` |
+| `LOGGING_SENTRY_DSN` | the DSN of the API, may be empty |
+| `SENTRY_DSN` | the DSN of the engine, may be empty |
+
+Without `HTTP_TRUSTED_PROXIES` every request looks like it comes from the
+proxy, so they all share the rate limit (100 requests per minute and IP).
 
 ## Origin, license and attribution
 

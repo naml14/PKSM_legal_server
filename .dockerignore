@@ -23,6 +23,11 @@ cc
 obj
 bin
 
+# El .env con las claves nunca entra en la imagen (solo el ejemplo).
+.env
+.env.*
+!.env.example
+
 # Binarios y ficheros generados (ojo: NO excluir *.dll, el motor necesita
 # coreconsole/deps/PKHeX.Core.AutoMod.dll)
 coreapi

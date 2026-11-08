@@ -1,0 +1,87 @@
+# ---------------------------------------------------------------------------
+# Deployment of the PKSM legality server on the VPS (Coolify).
+#
+# Coolify -> Projects -> New Resource -> Docker Compose Empty -> paste this
+# file -> Environment Variables -> the keys listed below.
+#
+# WHY THIS FILE AND NOT ONLY THE Dockerfile:
+# the mail server that is already running declares the Traefik labels by hand
+# (rule, tls, certresolver) and hangs from the `coolify` network. The same
+# pattern is replicated here, instead of relying on the labels that Coolify
+# autogenerates for a Dockerfile resource.
+#
+# WHERE TO PUT THE KEYS (never in this file):
+#   - Coolify: Environment Variables of this resource
+#   - Local: in the .env next to it (chmod 600; it is in .gitignore and in
+#     .dockerignore, so it never enters the image)
+#
+# The keys arrive at runtime: they are not baked into the image and they do
+# not travel in the repository. (A key written in the Dockerfile stays in the
+# image layers and can be read with `docker history`.)
+# ---------------------------------------------------------------------------
+
+services:
+  pksm-legal-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pksm-legal-server:latest
+    container_name: pksm-legal-server
+    restart: unless-stopped
+
+    environment:
+      # The keys arrive from Coolify (Environment Variables) or from the local
+      # .env. They are never written in this file.
+      CONFIGURED: "true"
+      ENV: "${ENV:-production}"
+      HTTP_ADDR: ":8080"
+      HTTP_BASE_URL: "${HTTP_BASE_URL:-http://localhost:8080}"
+      HTTP_VALIDATION_KEY: "${HTTP_VALIDATION_KEY:-}"
+      HTTP_ENCRYPTION_KEY: "${HTTP_ENCRYPTION_KEY:-}"
+      HTTP_SESSION_KEY: "${HTTP_SESSION_KEY:-}"
+      # The CIDR of the reverse proxy, so the client IP is read from
+      # X-Forwarded-For. Without it every request looks like it comes from the
+      # proxy and they all share the rate limit (100 requests per minute).
+      HTTP_TRUSTED_PROXIES: "${HTTP_TRUSTED_PROXIES:-}"
+      LOGGING_SENTRY_DSN: "${LOGGING_SENTRY_DSN:-}"
+      # The engine reads its own .env; this value is what it looks for.
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+
+    # Traefik pattern, identical to the mail server that already works.
+    #
+    # IMPORTANT: the hostname goes LITERAL. Coolify does not interpolate
+    # variables inside the labels: leaving ${DOMAIN} makes Traefik reject the
+    # rule ("invalid value for HostSNI matcher") and it does not ask for a
+    # certificate. To change the domain, edit this line (and the DNS record).
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pksmlegalserver.rule=Host(`legal.electrondevnaml.dev`)
+      - traefik.http.routers.pksmlegalserver.tls=true
+      - traefik.http.routers.pksmlegalserver.tls.certresolver=letsencrypt
+      - traefik.http.services.pksmlegalserver.loadbalancer.server.port=8080
+      - coolify.managed=true
+
+    # Published port: a direct way to debug (http://<IP>:8080). To expose it
+    # outside, the firewall has to be opened: `ufw allow 8080/tcp`.
+    ports:
+      - "8080:8080"
+
+    networks:
+      - coolify
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/general/kuma-ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  coolify:
+    external: true

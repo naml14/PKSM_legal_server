@@ -48,7 +48,7 @@ clean: cs-clean
 docker:
 	docker compose \
 		--project-name ${COMPOSE_PROJECT} \
-		--file docker-compose.yaml \
+		--file docker-compose.yml \
 		up \
 		--remove-orphans \
 		--build \
@@ -57,7 +57,7 @@ docker:
 docker-clean:
 	docker compose \
 		--project-name ${COMPOSE_PROJECT} \
-		--file docker-compose.yaml \
+		--file docker-compose.yml \
 		down \
 		--volumes \
 		--remove-orphans \
