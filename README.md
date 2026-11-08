@@ -220,6 +220,24 @@ Every one of these variables has to be **present**, an empty value is enough
 Without `HTTP_TRUSTED_PROXIES` every request looks like it comes from the
 proxy, so they all share the rate limit (100 requests per minute and IP).
 
+### The PKSM app (2ds/3ds)
+
+The app asks the service through the `Local API URL` setting. Two things
+about it:
+
+- The field takes **29 characters at most**: the on-screen keyboard of the
+  3DS is 29 columns wide.
+- The app concatenates the base with the path (`base + "api/v2/pksm/legality"`),
+  so the base **needs the trailing slash**.
+
+`https://electrondevnaml.dev/` is 28 characters and satisfies both. The
+longer `https://legal.electrondevnaml.dev/` works for anything else (a
+browser, a script), but it does not fit in that field.
+
+HTTPS works: the client of the app turns certificate verification off on
+purpose, because the 3DS has no certificate store to check a chain
+against.
+
 ## Origin, license and attribution
 
 This repository continues **FlagBrew/CoreAPI**
