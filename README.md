@@ -189,8 +189,8 @@ and the automatic legalization driven by what the legality check reports.
 The code is available under **either the MIT license or the GNU General Public
 License v3.0, at your option**:
 
-- [`LICENSE-MIT`](LICENSE-MIT)
-- [`LICENSE-GPL-3.0`](LICENSE-GPL-3.0)
+- [`licenses/LICENSE-MIT.txt`](licenses/LICENSE-MIT.txt)
+- [`licenses/LICENSE-GPL-3.0.txt`](licenses/LICENSE-GPL-3.0.txt)
 
 ### Attribution is required
 
