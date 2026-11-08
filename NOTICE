@@ -1,0 +1,31 @@
+PKSM_legal_server
+=================
+
+This project continues the work of FlagBrew/CoreAPI
+(https://github.com/FlagBrew/CoreAPI), the API server that PKSM uses for auto
+legality and GPSS. That project was abandoned (its last commit is 2023-10-11)
+and it never published a license file; its history is kept intact in this
+repository and can be read with:
+
+    git log upstream/master
+
+Upstream authors: FM1337, Allen (and dependabot for the dependency bumps).
+
+The work added here is original work on top of that baseline: the routes the
+PKSM app for 2ds/3ds needs, the legality engine on PKHeX/ALM 26.10.18, and the
+automatic legalization driven by what the legality check reports.
+
+Attribution
+-----------
+
+If you use this repository, in any way, you have to name where you took it
+from:
+
+  * keep this NOTICE file in the copies you distribute, and
+  * mention both this project (PKSM_legal_server) and the upstream project it
+    continues (FlagBrew/CoreAPI) in your README, your release notes or your
+    documentation.
+
+The code is available under the MIT license or under the GNU General Public
+License v3.0, at your option (see LICENSE-MIT and LICENSE-GPL-3.0). Whichever
+you pick, the attribution above applies.

@@ -172,17 +172,32 @@ The image is built in three stages: the Go binary, the C# engine (with the
 `/data/.env` to `/app/.env` for the API and to `/app/cc/.env` for the engine,
 and then runs the API as the main process.
 
-## Origin and license
+## Origin, license and attribution
 
 This repository continues **FlagBrew/CoreAPI**
 (<https://github.com/FlagBrew/CoreAPI>), the API server that PKSM uses for
-auto legality and GPSS. That project has been abandoned for more than three
-years (last upstream commit: 2023-10-11) and it never published a license.
+auto legality and GPSS. That project was abandoned (its last commit is
+2023-10-11) and it never published a license; its history is kept intact
+here, so `git log upstream/master` shows where every change comes from.
 
-The upstream history is kept intact, so `git log upstream/master` shows where
-every change comes from. Everything added here is original work on top of that
-baseline: the routes the PKSM app for 2ds/3ds needs, the legality engine on
-PKHeX/ALM 26.10.18, and the automatic legalization driven by what the
-legality check reports.
+Everything added here is original work on top of that baseline: the routes
+the PKSM app for 2ds/3ds needs, the legality engine on PKHeX/ALM 26.10.18,
+and the automatic legalization driven by what the legality check reports.
+
+### License
+
+The code is available under **either the MIT license or the GNU General Public
+License v3.0, at your option**:
+
+- [`LICENSE-MIT`](LICENSE-MIT)
+- [`LICENSE-GPL-3.0`](LICENSE-GPL-3.0)
+
+### Attribution is required
+
+Whichever license you pick, **if you use this repository you have to name
+where you took it from**: keep the [`NOTICE`](NOTICE) file in the copies you
+distribute and mention both this project (PKSM_legal_server) and the upstream
+project it continues (FlagBrew/CoreAPI) in your README, your release notes or
+your documentation.
 
 No license is inherited from the upstream, because it never had one.
