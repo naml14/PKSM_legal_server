@@ -174,11 +174,15 @@ and then runs the API as the main process.
 
 ## Origin and license
 
-This repository continues **FlagBrew/CoreAPI** (<https://github.com/FlagBrew/CoreAPI>),
-the API server that PKSM uses for auto legality and GPSS. The upstream history is
-kept intact, so `git log upstream/master` shows where every change comes from.
+This repository continues **FlagBrew/CoreAPI**
+(<https://github.com/FlagBrew/CoreAPI>), the API server that PKSM uses for
+auto legality and GPSS. That project has been abandoned for more than three
+years (last upstream commit: 2023-10-11) and it never published a license.
 
-The upstream repository does **not** publish a license file and GitHub reports no
-license for it, which means the rights stay with its authors. Keep this repository
-private unless you have their permission, and do not add a license of your own to
-code that is not yours.
+The upstream history is kept intact, so `git log upstream/master` shows where
+every change comes from. Everything added here is original work on top of that
+baseline: the routes the PKSM app for 2ds/3ds needs, the legality engine on
+PKHeX/ALM 26.10.18, and the automatic legalization driven by what the
+legality check reports.
+
+No license is inherited from the upstream, because it never had one.
