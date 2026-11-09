@@ -46,9 +46,12 @@ public static class Legality
         {
             // The context of the destination cannot be deduced: say it plainly instead of
             // handing a context-less pokemon over to ALM (which fails with an opaque error).
-            Console.Error.WriteLine(
-                "{\"error\": \"cannot determine the target generation to legalize into: the pokemon has no context and no usable generation was provided\"}");
-            Environment.Exit((int)enums.ExitCode.UnknownErrorDuringBase64ToPokemon);
+            const string error =
+                "{\"error\": \"cannot determine the target generation to legalize into: the pokemon has no context and no usable generation was provided\"}";
+            Console.Error.WriteLine(error);
+            // The serve loop has to stay alive when a request cannot be served (S9), so the
+            // failure is thrown there instead of ending the process.
+            Helpers.Fail(enums.ExitCode.UnknownErrorDuringBase64ToPokemon, error);
             return;
         }
 
