@@ -630,4 +630,161 @@ public class LegalityTest
         Assert.That(pkmn, Is.Not.Null);
         return pkmn as PK7 ?? throw new InvalidOperationException("the fixture is not a Gen 7 Pokemon");
     }
+
+    #region S3: the version of the other game of the pair
+
+    [TestCase(GameVersion.US, EntityContext.Gen7, GameVersion.UM)]
+    [TestCase(GameVersion.UM, EntityContext.Gen7, GameVersion.US)]
+    [TestCase(GameVersion.SN, EntityContext.Gen7, GameVersion.MN)]
+    [TestCase(GameVersion.MN, EntityContext.Gen7, GameVersion.SN)]
+    public void TheOtherGameOfThePairIsTheSiblingOfTheVersion(GameVersion version, EntityContext context,
+        GameVersion expected)
+    {
+        Assert.That(Legality.SiblingVersion(version, context), Is.EqualTo(expected));
+    }
+
+    [TestCase(GameVersion.CXD)]
+    [TestCase(GameVersion.RB)]
+    [TestCase(GameVersion.RD)]
+    public void AVersionWithoutAPairDoesNotHaveASibling(GameVersion version)
+    {
+        Assert.That(Legality.SiblingVersion(version, EntityContext.Gen7), Is.Null);
+    }
+
+    [Test]
+    public void APokemonWithTheVersionOfTheOtherGameOfItsPairIsLegalizedWithThatChangeAlone()
+    {
+        // The Latias was caught in Ultra Moon but its file says Ultra Sun: the only thing that has
+        // to change is the version, and the Pokemon must not be regenerated (S3).
+        var latias = CreateLatias();
+        Assert.That(latias.Version, Is.EqualTo(GameVersion.US));
+
+        var legalized = Legality.AutoLegalizeWithFallback(latias, EntityContext.Gen7, GameVersion.ORAS,
+            out var failureReason, out var changes);
+
+        Assert.That(legalized, Is.Not.Null, failureReason);
+        Assert.That(Legality.CheckLegality(legalized!).Valid, Is.True, failureReason);
+
+        Assert.That(changes, Has.Count.EqualTo(1),
+            $"the only change is the version: [{string.Join(", ", changes)}]");
+        Assert.That(changes[0], Does.StartWith("version US -> UM"));
+
+        // The Pokemon was not regenerated: everything it had is still there.
+        Assert.That(legalized!.OriginalTrainerName, Is.EqualTo(latias.OriginalTrainerName));
+        Assert.That(legalized.TID16, Is.EqualTo(latias.TID16));
+        Assert.That(legalized.SID16, Is.EqualTo(latias.SID16));
+        Assert.That(legalized.CurrentLevel, Is.EqualTo(latias.CurrentLevel));
+        Assert.That(legalized.CurrentFriendship, Is.EqualTo(latias.CurrentFriendship));
+        Assert.That(legalized.MetDate, Is.EqualTo(latias.MetDate));
+    }
+
+    #endregion
+
+    #region S4: the met date is not the day the engine runs
+
+    [Test]
+    public void APokemonWithoutAMetDateEndsWithThePlausibleDateOfTheGameItEndsUpIn()
+    {
+        // The Riolu has no met date: the date of the day the engine runs must not end up in it.
+        var riolu = CreateRiolu();
+        Assert.That(riolu.MetDate, Is.Null);
+
+        var legalized = Legality.AutoLegalizeWithFallback(riolu, EntityContext.Gen7, null,
+            out var failureReason, out _);
+
+        Assert.That(legalized, Is.Not.Null, failureReason);
+        Assert.That(legalized!.MetDate, Is.Not.EqualTo(DateOnly.FromDateTime(DateTime.Now)),
+            "the met date is not the day the engine runs");
+        Assert.That(legalized.MetDate,
+            Is.EqualTo(Legality.PlausibleMetDate(legalized.Version.Context, legalized.Version)),
+            "the met date is the plausible date of the game the Pokemon ends up in");
+    }
+
+    #endregion
+
+    #region S6: the minimal restorer is not thrown away
+
+    [Test]
+    public void APokemonBuiltFromItsPreviousFormKeepsTheDataThatCanBeRestored()
+    {
+        // The Metapod is built again from the encounter of the species it evolves from: the
+        // values that can be restored (the met location and the ability) have to be the ones
+        // of the Pokemon that was received, and not the ones of the encounter (S10.3, S6).
+        var metapod = CreateMetapod();
+
+        var legalized = Legality.AutoLegalizeWithFallback(metapod, EntityContext.Gen7, GameVersion.ORAS,
+            out var failureReason, out _);
+
+        Assert.That(legalized, Is.Not.Null, failureReason);
+        Assert.That(Legality.CheckLegality(legalized!).Valid, Is.True, failureReason);
+
+        Assert.That(legalized!.MetLocation, Is.EqualTo(metapod.MetLocation),
+            "the met location of the Pokemon that was received is kept");
+        Assert.That(legalized.Ability, Is.EqualTo(metapod.Ability),
+            "the ability of the Pokemon that was received is kept");
+        Assert.That(legalized.AbilityNumber, Is.EqualTo(metapod.AbilityNumber),
+            "the ability slot of the Pokemon that was received is kept");
+    }
+
+    #endregion
+
+    /// <summary>
+    /// A Gen 7 Latias whose file says Ultra Sun although it was caught in Ultra Moon.
+    /// </summary>
+    /// <remarks>
+    /// The file is embedded as base64 so the test does not depend on any file of the repository.
+    /// </remarks>
+    private static PK7 CreateLatias()
+    {
+        const string base64 =
+            "XQQZEAAAXNB8AQAAv2QAP7AeBAAaAVUFod8chAACAAAAAAAAAAAAAAAAAAAAAAAAiAAAAADAAwAA" +
+            "AAAAAAAAAEwAYQB0AGkAYQBzAAAAAAAAAAAAAAAAAAAAKAGWAXcBEQEFCgoKAAAAACgBlgF3AREB" +
+            "AAD///8/UABLAFMATQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBAQAAAAA" +
+            "AAAAAABBAG4AZAByAOkAcwAAAAAAAAAAAAAAAAAAAFoAAAAAAAAAAAAaCwgAAADeABI8ACAxBwEH" +
+            "AAAAAAAAAAA8AAAAuAC4AHcAgwCbAJsAswAAAAAAAAA=";
+
+        var pkmn = Helpers.PokemonFromBase64(base64, EntityContext.Gen7);
+        Assert.That(pkmn, Is.Not.Null);
+        return pkmn as PK7 ?? throw new InvalidOperationException("the fixture is not a Gen 7 Pokemon");
+    }
+
+    /// <summary>
+    /// A Gen 7 Riolu with no met date.
+    /// </summary>
+    /// <remarks>
+    /// The file is embedded as base64 so the test does not depend on any file of the repository.
+    /// </remarks>
+    private static PK7 CreateRiolu()
+    {
+        const string base64 =
+            "/G71LwAAzLS/AQAAv2QAPwAAAACeBAAAsiIIeQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAAAFIAaQBvAGwAdQAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAD///8/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAABBAG4AZAByAOkAcwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAQBACABAgAH" +
+            "AAAAAAAAAAABAAAADAAMAAYABgAGAAYABgAAAAAAAAA=";
+
+        var pkmn = Helpers.PokemonFromBase64(base64, EntityContext.Gen7);
+        Assert.That(pkmn, Is.Not.Null);
+        return pkmn as PK7 ?? throw new InvalidOperationException("the fixture is not a Gen 7 Pokemon");
+    }
+
+    /// <summary>
+    /// A Gen 7 Metapod that has to be built again from the encounter of its previous form.
+    /// </summary>
+    /// <remarks>
+    /// The file is embedded as base64 so the test does not depend on any file of the repository.
+    /// </remarks>
+    private static PK7 CreateMetapod()
+    {
+        const string base64 =
+            "/G71LwAAI9ILAAAAOTAx1AAAAAA9AQAANEymEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "AAAAAAAE0AZQB0AGEAcABvAGQAAAAAAAAAAAAAAAAAagAAAAAAAAAeAAAAAAAAAAAAAAAAAAAAAAD///8/" +
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+            "ABQAEsAUwBNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEAAAAGAAQBAB4BAgAHAAAAAAAAAA" +
+            "ABAAAADAAMAAUABgAFAAUABQAAAAAAAAA=";
+
+        var pkmn = Helpers.PokemonFromBase64(base64, EntityContext.Gen7);
+        Assert.That(pkmn, Is.Not.Null);
+        return pkmn as PK7 ?? throw new InvalidOperationException("the fixture is not a Gen 7 Pokemon");
+    }
 }
