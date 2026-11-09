@@ -12,6 +12,9 @@ public class Summary
         var pkmn = Helpers.PokemonFromBase64(pokemon, context ?? EntityContext.None);
         if (pkmn == null) return;
         Helpers.Init();
+        // The sprites are only needed by the summary (S6): the modes of legality and of
+        // legalization do not load them.
+        Helpers.InitSprites();
         var summary = GetSummary(pkmn);
         Console.WriteLine(JsonSerializer.Serialize(summary, Helpers.SerializerOptions));
     }

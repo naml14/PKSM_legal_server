@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.CommandLine;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using coreconsole.handlers;
 using coreconsole.utils;
 using PKHeX.Core;
@@ -17,7 +19,7 @@ public static class MainClass
         if (!Helpers.LoadEnv()) Environment.Exit((int)enums.ExitCode.EnvNotConfigured);
 
         var exitCode = (int)enums.ExitCode.Success;
-        using (SentrySdk.Init(o => { o.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN"); }))
+        using (InitializeSentry())
         {
             var pokemonArg = new Argument<string>(
                 "pokemon",
@@ -66,12 +68,20 @@ public static class MainClass
             var cmd4 = new Command("version", "Returns the version for ALM/PKHeX");
             cmd4.SetHandler(() => { Console.WriteLine(JsonSerializer.Serialize(new Version())); });
 
+            // The serve mode: the requests are read from the standard input and the answers are
+            // written to the standard output, one per line, with the engine (the stack of
+            // PKHeX/ALM) loaded only once (S4).
+            var cmd5 = new Command("serve",
+                "Reads one request per line from the standard input and writes one answer per line to the standard output, reusing the engine.");
+            cmd5.SetHandler(() => { Serve.Run(); });
+
             var cli = new RootCommand("CoreConsole - a tool for interacting with PKHeX and Auto Legality via CLI.")
             {
                 cmd1,
                 cmd2,
                 cmd3,
-                cmd4
+                cmd4,
+                cmd5
             };
 
             // A command line that cannot be understood must not be reported as success:
@@ -100,6 +110,22 @@ public static class MainClass
         }
 
         Environment.Exit(exitCode);
+    }
+
+    /// <summary>
+    /// Starts the Sentry SDK when there is a DSN to send the events to (S7).
+    /// </summary>
+    /// <remarks>
+    /// When the DSN is missing or empty there is nowhere to send the events to, so the SDK is not
+    /// started at all: it costs about 28 ms and there is nothing it can do with the events.
+    /// </remarks>
+    /// <returns>The handle of the SDK, or null when it was not started.</returns>
+    public static IDisposable? InitializeSentry()
+    {
+        var dsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
+        if (string.IsNullOrWhiteSpace(dsn)) return null;
+
+        return SentrySdk.Init(o => { o.Dsn = dsn; });
     }
 
     /// <summary>
@@ -163,7 +189,7 @@ public static class MainClass
     /// A name is returned canonicalized, and anything else returns null so the command line is
     /// reported as invalid.
     /// </summary>
-    private static string? MapGeneration(string value)
+    public static string? MapGeneration(string value)
     {
         var trimmed = value.Trim();
         if (trimmed.Length == 1 && trimmed[0] >= '1' && trimmed[0] <= '9') return "Gen" + trimmed;
@@ -174,3 +200,13 @@ public static class MainClass
         return null;
     }
 }
+
+/// <summary>
+/// The serve mode: one request per line of the standard input, one answer per line of the
+/// standard output, with the engine (the stack of PKHeX/ALM) loaded only once (S4).
+/// </summary>
+/// <remarks>
+/// The answer of a request carries the exit code the CLI would return and the exact text the
+/// handler writes to the standard output, so the layer that calls the engine interprets the
+/// payload exactly as it does with the single request mode.
+/// </remarks>
