@@ -357,6 +357,8 @@ public static class Legality
         string? firstFailure = null;
         var candidates = CandidateVersions(pokemon, targetContext, requestedVersion).ToList();
 
+        var siblingTried = false;
+
         foreach (var candidate in candidates)
         {
             tried.Add(candidate);
@@ -384,6 +386,29 @@ public static class Legality
                 {
                     changes.AddRange(DescribeChanges(pokemon, repaired));
                     return repaired;
+                }
+
+                // The pokemon is also tried with the other game of the pair of its version (Ultra
+                // Sun and Ultra Moon, Sun and Moon, ...): a Pokemon caught in Ultra Moon whose file
+                // says Ultra Sun is legal as soon as the version names the game it comes from, and
+                // that is the change that modifies the Pokemon the least, so it is tried before
+                // regenerating it. It is tried once: the version of the Pokemon does not change
+                // from one candidate to the next.
+                if (!siblingTried)
+                {
+                    siblingTried = true;
+
+                    var sibling = SiblingVersionAttempt(pokemon, targetContext);
+                    if (sibling != null)
+                    {
+                        var siblingRepaired = ApplyDirectedRepairs(sibling, targetContext, candidate,
+                            InvalidReasons(sibling), new List<string>());
+                        if (CheckLegality(siblingRepaired).Valid)
+                        {
+                            changes.AddRange(DescribeChanges(pokemon, siblingRepaired));
+                            return siblingRepaired;
+                        }
+                    }
                 }
 
                 // Otherwise ALM is asked to regenerate the Pokemon with the repairs applied.
@@ -446,7 +471,12 @@ public static class Legality
                 if (evolved == null) continue;
 
                 var restored = RestoreMinimal(pokemon, evolved);
-                restored = PreserveShiny(pokemon, evolved);
+
+                // The shiny flag is put back on the RESTORED pokemon: the other two paths (the
+                // regeneration and the rebuild from an encounter) do the same, and handing over
+                // the pokemon of ALM instead would throw away everything RestoreMinimal put
+                // back (the met location, the ability, the moves, the IVs/EVs, ...).
+                restored = PreserveShiny(pokemon, restored);
                 if (!CheckLegality(restored).Valid) continue;
 
                 changes.AddRange(DescribeChanges(pokemon, restored));
@@ -470,7 +500,9 @@ public static class Legality
             if (swept == null) continue;
 
             var restoredSweep = RestoreMinimal(pokemon, swept);
-            restoredSweep = PreserveShiny(pokemon, swept);
+
+            // The shiny flag is put back on the RESTORED pokemon, like in the other paths.
+            restoredSweep = PreserveShiny(pokemon, restoredSweep);
             if (!CheckLegality(restoredSweep).Valid) continue;
 
             changes.AddRange(DescribeChanges(pokemon, restoredSweep));
@@ -2350,6 +2382,49 @@ public static class Legality
     }
 
     /// <summary>
+    /// The other game of the pair the version of the pokemon belongs to.
+    /// </summary>
+    /// <param name="version">The version of the pokemon.</param>
+    /// <param name="context">The generation the version has to belong to.</param>
+    /// <returns>The other game of the pair, or null when the version does not belong to a pair.</returns>
+    /// <remarks>
+    /// The games of a generation come in pairs (Ultra Sun and Ultra Moon, Sun and Moon, Omega
+    /// Ruby and Alpha Sapphire, ...). A Pokemon that was caught in one of them is legal with the
+    /// version of that game: a file that says the other one of the pair makes the Pokemon illegal,
+    /// because the moves it relearns and the encounter it comes from belong to the game it was
+    /// really caught in. Only a group of two games is a pair: the four games of Gen 1 (Red, Green,
+    /// Blue and Yellow) are one group and they do not have a sibling.
+    /// </remarks>
+    public static GameVersion? SiblingVersion(GameVersion version, EntityContext context)
+    {
+        var group = VersionsOfGroup(version, context).ToList();
+        if (group.Count != 2) return null;
+
+        return group[0] == version ? group[1] : group[0];
+    }
+
+    /// <summary>
+    /// The pokemon tried with the other game of the pair of its version.
+    /// </summary>
+    /// <param name="source">The pokemon that was received. It is never modified.</param>
+    /// <param name="targetContext">The generation the pokemon has to be legalized into.</param>
+    /// <returns>A copy of the pokemon with the version corrected, or null when there is no sibling.</returns>
+    private static PKM? SiblingVersionAttempt(PKM source, EntityContext targetContext)
+    {
+        if (source.Version == GameVersion.Any) return null;
+        if (source.Version.Context != targetContext) return null;
+
+        var sibling = SiblingVersion(source.Version, targetContext);
+        if (sibling == null || sibling.Value.Context != targetContext) return null;
+
+        var candidate = ClonePokemon(source);
+        if (candidate == null) return null;
+
+        candidate.Version = sibling.Value;
+        return candidate;
+    }
+
+    /// <summary>
     /// Legalizes a pokemon from a real encounter of its species at a level.
     /// </summary>
     /// <param name="original">The pokemon that was received.</param>
@@ -2633,7 +2708,7 @@ public static class Legality
     {
         var result = ClonePokemon(legalized) ?? legalized;
 
-        result = RestoreField(result, original, (target, source) => target.MetDate = source.MetDate);
+        result = RestoreMetDate(result, original);
         result = RestoreField(result, original, (target, source) => target.MetLocation = source.MetLocation);
         result = RestoreField(result, original, (target, source) => target.MetLevel = source.MetLevel);
         result = RestoreField(result, original, (target, source) =>
@@ -2665,6 +2740,40 @@ public static class Legality
         });
 
         return result;
+    }
+
+    /// <summary>
+    /// Restores the met date of the pokemon that was received.
+    /// </summary>
+    /// <param name="current">The pokemon that ALM generated.</param>
+    /// <param name="original">The pokemon that was received.</param>
+    /// <returns>The pokemon with the met date it has to have.</returns>
+    /// <remarks>
+    /// The date of the pokemon that was received is the one that is kept, when it is a date that
+    /// can exist. When it is not (a pokemon with no date, or the first of January of the year
+    /// one), ALM puts the date of the day the engine ran, and that makes the answer of the engine
+    /// depend on the day it runs: the date of the release of the game the pokemon ends up in is
+    /// used instead, because it is a date that can exist and it is a day the pokemon could have
+    /// been met on.
+    /// </remarks>
+    private static PKM RestoreMetDate(PKM current, PKM original)
+    {
+        if (IsValidMetDate(original.MetDate))
+        {
+            var restored = RestoreField(current, original, (target, source) => target.MetDate = source.MetDate);
+            if (!ReferenceEquals(restored, current)) return restored;
+        }
+
+        if (!IsUsableContext(current.Version.Context)) return current;
+
+        var plausible = PlausibleMetDate(current.Version.Context, current.Version);
+        if (!IsValidMetDate(plausible)) return current;
+
+        var candidate = ClonePokemon(current);
+        if (candidate == null) return current;
+
+        candidate.MetDate = plausible;
+        return CheckLegality(candidate).Valid ? candidate : current;
     }
 
     /// <summary>

@@ -32,10 +32,12 @@ def post(url, path, headers=()):
 
     Reintenta si la respuesta viene vacia: una llamada fallida no puede
     confundirse con un Pokemon sin motivos, y el numero de motivos es
-    justamente lo que se fija en la linea base.
+    justamente lo que se fija en la linea base. Tambien reintenta ante un
+    429: la API limita a 100 peticiones por minuto y por IP, y con los 59
+    fixtures la tanda se pasa de ese limite.
     """
     last = ("", None)
-    for attempt in range(3):
+    for attempt in range(6):
         with tempfile.TemporaryDirectory() as tmp:
             ascii_path = os.path.join(tmp, "pokemon.bin")
             shutil.copy(path, ascii_path)
@@ -53,6 +55,9 @@ def post(url, path, headers=()):
             status = int(code)
         except ValueError:
             status = 0
+        if status == 429:
+            time.sleep(3)
+            continue
         if payload is not None:
             return status, payload
         last = (body[:120], None)

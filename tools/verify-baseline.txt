@@ -41,6 +41,7 @@
 0151 - Mew - A7EE10411008.pk7|false|2|yes
 0151 - Mew - DB702FF56EFC.pk7|false|3|yes
 0168 - Ariados - 33F92FF56EFC.pk7|false|3|yes
+0169 ★ - Crobat - B4852FF56EFC.pk7|false|3|yes
 0182 - Bellossom - 7F2F2FF56EFC.pk7|false|3|yes
 0186 - Politoed - E2952FF56EFC.pk7|false|4|yes
 0190 - Aipom - 8A9BAC15DED3.pk9|false|1|yes
@@ -50,8 +51,18 @@
 0201 - Unown - 917C2FF56EFC.pk7|false|4|yes
 0217 - Ursaring - 1D262FF56EFC.pk7|false|3|yes
 0221 - Piloswine - 9F362FF56EFC.pk7|false|3|yes
+0380 ★ - Latias - D05C1019045D.pk7|false|5|yes
+0380 ★ - Latias - DA21B01FDCF3.pk7|true|1|already
+0382 ★ - Kyogre - 700BCFC242A3.pk7|true|1|already
+0382 ★ - Kyogre - 89FBC9190DFA.pk7|false|5|yes
+0385 ★ - Jirachi - 757045A2DAD3.pk7|true|1|already
+0385 ★ - Jirachi - 9DFB421A9C94.pk7|true|1|already
+0447 ★ - Riolu - 3EA50DDC4E14.pk7|true|1|already
+0447 ★ - Riolu - B4CC2FF56EFC.pk7|false|3|yes
 0483 - Dialga - 8FBE511B89E1.pk9|true|1|already
 0484 - Palkia - 854B930C4A06.pk9|true|1|already
 0487 - Giratina - CC09EC92E4E0.pk9|true|1|already
 0704 - Goomy - 89956D135EB8.pk7|false|2|yes
 0726 ★ - Torracat - FC2FD3A74BA9.pk7|false|1|yes
+0788 ★ - Tapu Fini - 4708E7C86911.pk7|true|1|already
+0788 ★ - Tapu Fini - 505353749233.pk7|true|1|already
