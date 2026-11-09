@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/FlagBrew/CoreAPI/internal/models"
+	"github.com/FlagBrew/CoreAPI/internal/utils"
 	"github.com/apex/log"
 	"github.com/getsentry/sentry-go"
 	"github.com/lrstanley/chix"
@@ -38,7 +39,13 @@ func main() {
 	if err := chix.RunCtx(
 		ctx, httpServer(ctx),
 	); err != nil {
+		// The warm engines are child processes of the API: they are stopped with it.
+		utils.ShutdownWarmEngines()
+
 		defer sentry.Flush(2 * time.Second)
 		log.WithError(err).Fatal("shutting down")
 	}
+
+	// The warm engines are child processes of the API: they are stopped with it.
+	utils.ShutdownWarmEngines()
 }
